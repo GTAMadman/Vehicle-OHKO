@@ -3,12 +3,34 @@
 #include "CTheScripts.h"
 #include "CWorld.h"
 
+template<typename T = int>
+T &
+GetGlobalVariable(uint32_t index) {
+	return *reinterpret_cast<T*>(&CTheScripts::ScriptSpace[index * 4]);
+}
 void __fastcall FixTrucking(CRunningScript* script, void* edx, short count)
 {
 	script->CollectParameters(count);
 
 	if (script->m_szName == (std::string)"truck")
 		CTheScripts::ScriptParams[1].iParam = 1000;
+}
+bool IsBoatSchoolFix()
+{
+	if (CTheScripts::pActiveScripts->m_szName == std::string("boat"))
+	{
+		// Flying Fish
+		int flying_fish = CTheScripts::LocalVariablesForCurrentMission[161].iParam;
+		if (GetGlobalVariable(8189) == 4 && (flying_fish == 1 || flying_fish == 2))
+			return true;
+
+		// Land, Air & Sea
+		int land_air_sea = CTheScripts::LocalVariablesForCurrentMission[162].iParam;
+		if (GetGlobalVariable(8189) == 5 && (land_air_sea == 25 || land_air_sea == 30 ||
+			land_air_sea == 40 || land_air_sea == 45 || land_air_sea == 50))
+			return true;
+	}
+	return false;
 }
 
 void GameProcess()
@@ -29,7 +51,7 @@ void GameProcess()
 	{
 		CVehicle* trailer = vehicle->m_pTrailer;
 
-		if (vehicle->m_fHealth < health)
+		if (vehicle->m_fHealth < health && !IsBoatSchoolFix())
 			vehicle->m_fHealth -= vehicle->m_fHealth;
 
 		// Used for vehicle's attached using winches.
